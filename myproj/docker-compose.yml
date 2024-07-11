@@ -1,0 +1,43 @@
+version: '3'
+
+networks:
+  mynetwork:
+    driver: bridge
+
+services:
+  mysql:
+    image: mysql:8.0.32
+    networks:
+      - mynetwork
+    environment:
+      MYSQL_DATABASE: "test_db"
+      MYSQL_ROOT_PASSWORD: "@admin"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p@admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  
+  backend:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /code
+    command: ["bash", "-c", "python manage.py runserver 127.0.0.1:8000"]
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=test_db
+      - DB_USER=root
+      - DB_PASSWORD=@admin
+      - DB_HOST=mysql
+      - DB_PORT=3306
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - mynetwork

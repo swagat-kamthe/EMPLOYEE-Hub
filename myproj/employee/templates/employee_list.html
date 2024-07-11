@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Management System</title>
+    <style>
+        select {
+            display: block;
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #4e54c8, #8f94fb);
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        header {
+            background-color: #5e6cff;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        header h1 {
+            margin: 0;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #5e6cff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .btn:hover {
+            background-color: #434190;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #5e6cff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f1f1f1;
+        }
+        .hide-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #f5534f;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .hide-btn:hover {
+            background-color: #d63d3a;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        a {
+            color: #5e6cff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            background-color: #5e6cff;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            border-radius: 0 0 10px 10px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Employee Management System</h1>
+    </header>
+
+    <div class="container">
+        <div class="btn-container">
+            <a href="{% url 'employee_create' %}" class="btn">Add Employee</a>
+            <button id='show_emp' class="btn">Show Employees</button>
+            <a href="{% url 'department_create' %}" class="btn">Add Department</a>
+            <button id='show_dept' class="btn">Show Departments</button>
+            <a href="{% url 'manager_create' %}" class="btn">Add Manager</a>
+            <button id='show_mng' class="btn">Show Managers</button>
+            <a href="{% url 'project_create' %}" class="btn">Add Project</a>
+            <button id='show_prjt' class="btn">Show Projects</button>
+        </div>
+
+        <div id='employee_table' class="section" style="display: none">
+            <form method="POST" action="{% url 'employee_list' %}">
+                {% csrf_token %}
+                <div>
+                    <label for="department">Department:</label>
+                    <select name="department" id="department">
+                        <option value="">All</option>
+                        {% for department in departments %}
+                            <option value="{{ department.id }}" {% if department.id|stringformat:"s" == selected_department %}selected{% endif %}>{{ department.DeptName }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="manager">Manager:</label>
+                    <select name="manager" id="manager">
+                        <option value="">All</option>
+                        {% for manager in managers %}
+                            <option value="{{ manager.id }}" {% if manager.id|stringformat:"s" == selected_manager %}selected{% endif %}>{{ manager.ManagerName }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="project">Project:</label>
+                    <select name="project" id="project">
+                        <option value="">All</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}" {% if project.id|stringformat:"s" == selected_project %}selected{% endif %}>{{ project.ProjectName }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="name">Name:</label>
+                    <input type="text" name="name" id="name" value="{{ name_query }}">
+                </div>
+                <input type="hidden" name="table_visibility" id="table_visibility" value="{{ table_visibility }}">
+                <button id="filterEmp" type="submit">Filter</button>
+            </form>
+            
+                       
+            <h2>Employee List</h2>
+            <table>
+                <tr>
+                    <th>Emp no.</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Position</th>
+                    <th>Department ID</th>
+                    <th>Manager ID</th>
+                    <th>Project ID</th>
+                </tr>
+                {% for employee in employees %}
+                <tr>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.id }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.first_name }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.last_name }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.email }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.phone }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.addr }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.position }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.DeptID }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.ManagerID }}</a></td>
+                    <td><a href="{% url 'employee_detail' employee.pk %}">{{ employee.ProjectID }}</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button id="hide_emp" class="hide-btn">Hide Details</button>
+        </div>
+
+        <div id='department_table' class="section" style="display: none">
+            <h2>Department List</h2>
+            <table>
+                <tr>
+                    <th>Department Name</th>
+                    <th>Department ID</th>
+                </tr>
+                {% for department in departments %}
+                <tr>
+                    <td><a href="{% url 'department_detail' department.pk %}">{{ department.id }}</a></td>
+                    <td><a href="{% url 'department_detail' department.pk %}">{{ department.DeptName }}</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button id="hide_dept" class="hide-btn">Hide Details</button>
+        </div>
+
+        <div id='manager_table' class="section" style="display: none">
+            <h2>Manager List</h2>
+            <table>
+                <tr>
+                    <th>Manager Name</th>
+                    <th>Manager ID</th>
+                </tr>
+                {% for manager in managers %}
+                <tr>
+                    <td><a href="{% url 'manager_detail' manager.pk %}">{{ manager.id }}</a></td>
+                    <td><a href="{% url 'manager_detail' manager.pk %}">{{ manager.ManagerName }}</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button id="hide_mng" class="hide-btn">Hide Details</button>
+        </div>
+
+        <div id='project_table' class="section" style="display: none">
+            <h2>Project List</h2>
+            <table>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Project ID</th>
+                </tr>
+                {% for project in projects %}
+                <tr>
+                    <td><a href="{% url 'project_detail' project.pk %}">{{ project.id }}</a></td>
+                    <td><a href="{% url 'project_detail' project.pk %}">{{ project.ProjectName }}</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button id="hide_prjt" class="hide-btn">Hide Details</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Employee Management System</p>
+    </footer>
+
+    <script>
+        const show_emp = document.getElementById('show_emp');
+        const hide_emp = document.getElementById('hide_emp');
+        const table = document.getElementById('employee_table');
+        const table_visibility = document.getElementById('table_visibility');
+
+    // Set table display based on hidden input value
+    window.onload = function() {
+        if (table_visibility.value === 'show') {
+            table.style.display = 'block';
+        } else {
+            table.style.display = 'none';
+        }
+    };
+
+        show_emp.addEventListener('click', () => {
+            table.style.display = 'block';
+            table_visibility.value = 'show';
+        });
+        hide_emp.addEventListener('click', () => {
+            table.style.display = 'none';
+            table_visibility.value = 'hide';
+        });
+
+        const filterEmp = document.getElementById('filterEmp');
+        filterEmp.addEventListener('click', () => {
+            table.style.display = 'block';
+        });
+        
+        const show_dept = document.getElementById('show_dept');
+        const hide_dept = document.getElementById('hide_dept');
+        const dtable = document.getElementById('department_table');
+
+        show_dept.addEventListener('click', () => {
+            dtable.style.display = 'block';
+        });
+        hide_dept.addEventListener('click', () => {
+            dtable.style.display = 'none';
+        });
+
+        const show_mng = document.getElementById('show_mng');
+        const hide_mng = document.getElementById('hide_mng');
+        const mtable = document.getElementById('manager_table');
+
+        show_mng.addEventListener('click', () => {
+            mtable.style.display = 'block';
+        });
+        hide_mng.addEventListener('click', () => {
+            mtable.style.display = 'none';
+        });
+
+        const show_prjt = document.getElementById('show_prjt');
+        const hide_prjt = document.getElementById('hide_prjt');
+        const ptable = document.getElementById('project_table');
+
+        show_prjt.addEventListener('click', () => {
+            ptable.style.display = 'block';
+        });
+        hide_prjt.addEventListener('click', () => {
+            ptable.style.display = 'none';
+        });
+
+    </script>
+</body>
+</html>
